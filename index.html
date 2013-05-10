@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+  <title>&nbsp;</title>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<link rel="stylesheet" href="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.css" />
+		<script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
+		<script src="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.js"></script>
+		<!-- <script type="text/javascript" charset="utf-8" src="cordova/cordova.js"></script> -->
+		<style>
+			.ui-footer 
+			{
+ 			    position: absolute !important;
+   			    bottom: 0;
+    			width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+		<!-- Start of first page I -->
+		<div data-role="page" id="page1">
+			<!-- Header -->
+			<div data-role="header">
+				<h1>Login</h1>
+
+			</div>
+			
+			<div style="position: absolute; top:30%; width:100%; ">
+			<form name="formLogin" action="TallyESSMenu.html" method="post">
+			<!-- /header -->
+			<!-- Content    -->
+			<div data-role="content">
+				
+				<input type="text"     name="txtBoxUsername" id="txtBoxUsername" value="" placeholder="Username"/>
+				
+				<input type="password" name="txtBoxPassword" id="txtBoxPassword" value="" placeholder="Password"/>
+				
+				<label data-mini="true"><input type="checkbox" name="checkbox-0" /> Remember Me </label>
+				<div class="ui-grid-a">
+					<div class="ui-block-a">
+						<input type='reset'  value="Reset"  data-role="button" data-theme="a"  />
+					</div>
+					<div class="ui-block-b">
+						<input type='submit' value="Submit" data-ajax="false" data-role="button" data-theme="a" data-transition="fade" />
+					</div>	   
+				</div>
+				
+				
+			</div>
+			
+			</form>
+			</div>
+			<!-- /content -->
+			<!-- footer -->
+			<div data-role="footer">
+				<h4>&copy; 2013 Tally</h4>
+			</div>
+			<!-- /footer -->
+		</div>
+		<!-- /page -->
+
+	</body>
+</html>
+<script>
+	document.addEventListener("deviceready", onDeviceReady, false);
+		
+	function onDeviceReady() {
+		document.addEventListener("pause", onPause, false);
+		document.addEventListener("resume", onResume, false);
+		//alert("Device is Ready");
+		/*	$.ajax({
+				url : 	"https://bssqa1.tallysolutions.com/isrel45_00/modules/hrms/intranet/reports/GetCount.php",
+				data : {
+							strUserEventID:100,
+							strEmpId:33
+					    },
+				beforeSend : function(){
+					alert(12);
+				},
+				error : function(){
+					alert("Error occured");
+				},
+				success : function(data){
+					alert(2);
+					alert(data);
+					//$(".SelfApprPendingCount").html()
+				} 
+				
+		});
+*/
+	}
+
+
+//What to do when paused
+function onPause(){
+	
+	alert("paused!");
+}
+
+//What to do when resumed
+function onResume()
+{
+	
+	alert("resume");
+}
+</script>
