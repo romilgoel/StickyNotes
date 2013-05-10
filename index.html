@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css" />
+  <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+  <script src="http://code.jquery.com/ui/1.10.2/jquery-ui.js"></script>
+  <script src="scripts/json2.js"></script>
+  
+  <style>
+  html, body
+  {
+    height: 98%;
+  }
+  
+  .stickyNote
+  {
+  
+	background : #fff046;
+	height     : 400px;
+	width      : 250px;
+	border-radius : 5px;
+	padding  : 3px;
+	font-size: 20px;
+	font-color : blue;
+	box-shadow : 2px 2px 32px #888888;
+
+  }
+  
+  .header
+  {
+	 
+  }
+  
+  #createStickyNote
+  {
+	float : right;
+  }
+  .divColorChange
+  {
+	  position:relative;
+	  top:0px;
+	  left:0px;
+	  height:auto;
+	  width : 20px;
+	  display : none;
+  }
+  .colorChangeDiv:hover
+  {
+		cursor: pointer;
+  }
+  .colorDiv:hover
+  {
+		cursor: pointer;
+  }
+  .classDeleteNote:hover
+  {
+		cursor: pointer;
+  }
+  .classAddNote:hover
+  {
+		cursor: pointer;
+  }
+  
+  </style>
+  <script>
+  var isMouseDown = 0;
+  var max_z_index = 1;
+  var lastStickyX = 20;
+  var lastStickyY = 20;
+  var stickyNoteHeight = 400;
+  var stickyNoteWidth = 350;
+  var headerHeight = 40;
+  var autoSyncFlag = 1;
+  var notesArray = new Array();
+  // colors : yellow, green, orange, blue, purple, greenish-yellow
+  var colorArray = new Array(
+							 ["#fef7a3","#fff046"],
+							 ["#dafea3","#b5ff46"],
+							 ["#ffdb99","#ffbf46"],
+							 ["#adf1ff","#46e0ff"],
+							 ["#e9ccff","#d8a3ff"],
+							 ["#e8ff8e","#d9ff47"]
+							);
+  $(document).ready(function(){
+	
+	   setInterval(function(){
+	   //alert($("#cbAutoSync").prop("checked"));
+			if( $("#cbAutoSync").prop("checked") )
+			{
+				SyncAllNotes();
+			}
+		} , 3000);
+	
+	
+	$(document).click(function( event ){
+		var target = event.target;
+		//alert($(target).html());
+		if( $(target).closest(".divColorChange").length == 0 && 
+			$(target).closest(".colorChangeDiv").length == 0   )
+			$(".divColorChange").hide();
+		
+	});
+	$(document).mousedown(function() {
+        isMouseDown = 1;
+		$("#coord").html(isMouseDown);
+    })
+    .mouseup(function() {
+        isMouseDown = 0;
+		//alert(0);
+		$("#coord").html(isMouseDown);
+    });
+	
+	RenderNotesIfExist();
+	addColortoColorPallete();
+	$(document).on("click",".classAddNote,#createStickyNote",function(){
+		var obj = new StickyNote();
+		obj.init();
+		obj.draw();
+		notesArray.push(obj);
+		localStorage["notesArray"] = notesArray;
+		
+		
+	});
+	//$(".stickyNoteClass").draggable();
+	$(".stickyNoteClass").on("click",function(){
+	var thisObj = $(this);
+	setTimeout(function(){
+		
+		thisObj.css("z-index", ++max_z_index);
+		
+	},10)
+		
+	});
+	
+	//delete a note
+	$(document).on("click", ".classDeleteNote", function(){
+		
+		localStorage["numOfNotes"] -= 1;
+		
+	});
+	
+	
+	
+		//$(".stickyNote").on("mousemove",function(ev){
+		//	if( isMouseDown == 1 )
+		//	{
+		//		var thisObj  = $(this);
+		//		var offsetObj = $(this).offset()
+		//		var thisPosX = offsetObj.left;
+		//		var thisPosY = offsetObj.top;
+		//	
+		//	    //thisObj.css("left",ev.pageX);
+		//		//thisObj.css("top",ev.pageY);
+		//		$("#coord").html(ev.pageX+"  "+ev.pageY+"   "+isMouseDown+"   "+thisPosX+"   "+thisPosY );
+		//	}
+		//});
+		
+		//$(".stickyNote").resizable();
+  });
+  
+  //---------------------------------------------------- FUNCTIONS ---------------------------------------------
+  
+  // Sticky note object
+	var StickyNote = function(){
+		this.x        = 10;
+		this.y        = 10;
+		this.BgColor  = "yellow";
+		this.height   = stickyNoteHeight;
+		this.width    = stickyNoteWidth;
+	}
+	
+	// initialize the object 
+	StickyNote.prototype.init = function(){
+		this.data		 = "";
+	    this.elememt	 = "";
+		this.body		 = "";
+		this.x        	 = Number(lastStickyX) + 10;
+		this.y        	 = Number(lastStickyY) + 10;
+		this.BgColor  	 = GetRandomColor();
+		// header details
+		this.headerColor = GetHeaderColor(this.BgColor);
+		this.headerHeight= headerHeight;
+		this.height      = stickyNoteHeight;			this.width       = stickyNoteWidth;
+		this.zindex      = max_z_index++;
+		lastStickyX     += 20;
+		lastStickyY     += 20;
+		
+		
+	}
+
+	// draw the sticky note
+	StickyNote.prototype.draw = function(){
+		var newDiv 					= document.createElement("div");
+		var elementBody			    = document.createElement("div");
+		newDiv.className		    = "stickyNoteClass";
+		newDiv.style.position 		= "absolute";
+		newDiv.style.left			= this.x+"px";
+		newDiv.style.top 			= this.y+"px";
+		newDiv.style.background 	= this.BgColor;
+		newDiv.style.height 		= this.height+"px";
+		newDiv.style.width 			= this.width+"px";
+		newDiv.style.borderRadius 	= "10px";
+		newDiv.style.boxShadow 		= "0px 0px 10px grey";
+		newDiv.style.fontSize 		= "24px";
+		newDiv.style.fontStyle 		= "italic";
+		newDiv.style.fontWeight		= "bold";
+		newDiv.style.zIndex	     	= this.zindex;
+		elementBody.innerHTML		= this.data;
+		elementBody.className		= "noteContent";
+		elementBody.style.padding	= "5px";
+		elementBody.style.height 	= (this.height-this.headerHeight-8)+"px";
+		elementBody.setAttribute('contenteditable', 'true');
+				
+		this.element = newDiv;
+		this.body = elementBody;
+		this.drawHeader();
+		this.element.appendChild(elementBody);
+		$("body").append(newDiv);
+		attachEvent(newDiv, this);
+	}
+	
+	// draw header of the sticky note
+	StickyNote.prototype.drawHeader = function(){
+		var newHeader 				= document.createElement("div");
+		var changeColorDiv			= GetColorChangeDiv(this);
+		var deleteNoteDiv			= GetDeleteNoteDiv(this);
+		var addNoteDiv				= GetAddNoteDiv(this);
+		newHeader.class				= "stickyNoteHeader";
+		//newHeader.onclick			= this.remove();
+		newHeader.style.background  = this.headerColor ;
+		newHeader.style.height 		= this.headerHeight+"px" ;
+		newHeader.style.width  		= this.width+"px";
+		newHeader.setAttribute('contenteditable', 'true');
+		//newHeader.appendChild(changeColorDiv);
+		newHeader.appendChild(deleteNoteDiv);
+		newHeader.appendChild(addNoteDiv);
+		this.element.appendChild(newHeader);
+		//this.append(newHeader);
+		
+	}
+	
+	// to remove the sticky note
+	StickyNote.prototype.remove = function(){
+		alert("here");
+		$("body").remove(this.element);
+	}
+	// get properties
+	StickyNote.prototype.getProperties = function(){
+		
+		var left = this.element.style.left;
+		var top = this.element.style.top;
+		var props = new Array (
+								this.elememt	 ,
+								left.substring(0,left.length-2),
+								top.substring(0,top.length-2),
+								this.BgColor  	 ,
+								this.headerColor ,
+								this.headerHeight,
+								this.height      ,
+								this.width       ,
+								lastStickyX      ,
+								lastStickyY      ,
+								this.data		 ,
+								this.element.style.zIndex
+								) ;
+		
+		//var str = this.element.innerHTML;//.css("left");
+		//alert(str+"   "+this.element.style.left);
+		
+		//alert(str.substring(0,str.length-2));
+		return props;
+	}
+	
+	// set properties
+	StickyNote.prototype.setProperties = function( arr ){
+			this.elememt	 = arr[0];
+			this.x        	 = arr[1];
+			this.y        	 = arr[2];
+			this.BgColor  	 = arr[3];
+			this.headerColor = arr[4];
+			this.headerHeight= arr[5];
+			this.height      = arr[6];
+			this.width       = arr[7];
+			//lastStickyX      = arr[8];
+			//lastStickyY      = arr[9];
+			this.data		 = arr[10];
+			this.zindex		 = arr[11];
+			
+	}
+  
+    // function to get a random background color
+    function GetRandomColor()
+    {
+		var randomItem = colorArray[Math.floor(Math.random()*colorArray.length)];
+		return randomItem[0];
+    }
+    
+    // function to get the header color corresponding to the background color
+    function GetHeaderColor( bgColor )
+    {
+		for( var i= 0; i < colorArray.length; i++ )
+		{
+			if( colorArray[i][0] == bgColor )
+			return colorArray[i][1];
+		}
+		return "grey";
+    }
+	
+	function attachEvent(note, thisObj)
+	{
+	//$(thisObj).draggable();
+	$(note).find(".noteContent").on("keyup",function(){
+		
+		thisObj.data = $(note).find(".noteContent").html();
+		
+		// store the  data of all notes into the localStorage
+		StoreNotesInStorage();
+	});
+	
+		$(".stickyNoteClass").draggable({
+			cancel : ".noteContent",
+			stop: function( event, ui ) {StoreNotesInStorage();}
+		});
+		$(".stickyNoteClass").find(".noteContent").attr('contenteditable', 'true');
+		$( ".stickyNoteClass" ).enableSelection();
+	}
+	
+	// function to store all the notes in the localStorage
+	function StoreNotesInStorage()
+	{
+		localStorage["numOfNotes"] = notesArray.length;
+		for( var i = 0 ; i < notesArray.length; i++ )
+		{
+			
+			localStorage["stickyNote"+i] = notesArray[i].getProperties();
+			
+		}
+		
+	}
+	
+  function deleteAllNotes()
+  {
+  	localStorage["numOfNotes"] = 0;
+  }
+  
+  // Render all the notes with data if they exists
+  function RenderNotesIfExist()
+  {
+	if( localStorage["numOfNotes"] > 0 )
+	{
+		max_z_index = 0;
+		for( var i=0; i < localStorage["numOfNotes"]; i++ )
+		{
+		//alert(1);
+			var obj = new StickyNote();
+			obj.init();
+			var arrObj  = localStorage["stickyNote"+i].split(",");
+			obj.setProperties(arrObj);
+			console.log(arrObj);
+			obj.draw();
+			notesArray.push(obj);
+			if(max_z_index < arrObj[11])
+				max_z_index = Number(arrObj[11])+1;
+		}
+		console.log(max_z_index);
+	}	
+	else
+	 return 0 ;
+  }
+  
+  // to get the color changing div 
+  var GetColorChangeDiv = function(thisObj){
+		var newDiv = document.createElement("div");
+		//newDiv.style.position = "relative";
+		newDiv.className    = "colorChangeDiv";
+		//newDiv.style.top = "20%";
+		//newDiv.style.left = "2%";
+		newDiv.style.float = "left";
+		newDiv.style.margin = "3% 0% 0% 2%";
+		newDiv.style.width = "6%";
+		newDiv.style.height = "50%";
+		newDiv.onclick = function(){ShowColorPallete(thisObj);};
+		//newDiv.style.marginTop = "5px";
+		//newDiv.style.marginLeft = "5px";
+		
+		newDiv.style.background = thisObj.BgColor;
+		return newDiv;
+  }	
+  
+  // show the color pallete to the user
+  function ShowColorPallete(thisObj)
+  {
+  //alert(1);
+	
+		var colorPallete = $(".divColorChange");
+		if( colorPallete.css("display") == "none" )
+			colorPallete.show();
+		else
+			colorPallete.hide();
+		colorPallete.css("top",thisObj.element.style.top);
+		colorPallete.css("left",thisObj.element.style.left);
+		colorPallete.css("z-index",thisObj.element.style.zIndex+1);
+  }
+  
+  function addColortoColorPallete()
+  {
+		var newDiv = $(".divColorChange");
+		for( var i = 0 ;i < colorArray.length ; i++ )
+		{
+			var colorDiv = document.createElement("div");
+			colorDiv.style.width = "auto";
+			colorDiv.style.height = "20px";
+			colorDiv.className = "colorDiv";
+			colorDiv.style.background = colorArray[i][0];
+			newDiv.append(colorDiv);
+		}
+  }
+  
+  //get the delete note div
+  function GetDeleteNoteDiv( thisObj )
+  {
+		var newDiv = document.createElement("div");
+		newDiv.style.float = "right";
+		//newDiv.style.background = "grey";
+		newDiv.style.height   = "50%"; 
+		newDiv.style.width    = "7%";
+		newDiv.style.margin = "3% 2% 0% 0%";
+		newDiv.innerHTML = "<img src='images/delete.png' height='25' />";
+		newDiv.className = "classDeleteNote"; 
+		newDiv.style.color = "grey";
+		
+		return newDiv;
+  }
+  
+  // get the add note div
+  function GetAddNoteDiv()
+  {
+		var newDiv = document.createElement("div");
+		newDiv.style.float = "right";
+		//newDiv.style.background = "grey";
+		newDiv.style.height   = "50%"; 
+		newDiv.style.width    = "7%";
+		newDiv.style.margin = "3% 0% 0% 0%";
+		newDiv.innerHTML = "<img src='images/add.png' height='18' />";
+		newDiv.className = "classAddNote"; 
+		newDiv.style.color = "grey";
+		
+		return newDiv;
+  }
+  
+  function SyncAllNotes()
+  {
+	$("#divSyncedMsg").show();
+	setTimeout(function(){
+		$("#divSyncedMsg").hide();
+	},500);	
+  }
+  </script>
+  
+</head>
+<body>
+
+	<!-- <div class='stickyNote' contenteditable='true'></div> -->
+	<div id='divSyncedMsg'>Synced</div>
+	<button id="createStickyNote">New Note</button>
+	<button onclick="deleteAllNotes();">Delete all Notes</button>
+	<input type='checkbox' id='cbAutoSync' /> AutoSync
+	<div class='divColorChange'></div>
+	<!-- <span id="coord"> None </span> -->
+	
+</body>
+</html>
